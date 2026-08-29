@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SAS - Live AI Attendance</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#bec6e0",
+                        "primary": "#000000",
+                        "secondary-container": "#2170e4",
+                        "tertiary": "#000000",
+                        "on-secondary-container": "#fefcff",
+                        "on-secondary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "tertiary-container": "#00201d",
+                        "background": "#f8f9ff",
+                        "surface-container-high": "#dce9ff",
+                        "secondary": "#0058be",
+                        "surface-tint": "#565e74",
+                        "surface-dim": "#cbdbf5",
+                        "surface-container": "#e5eeff",
+                        "on-background": "#0b1c30",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-primary-fixed": "#131b2e",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f8f9ff",
+                        "secondary-fixed": "#d8e2ff",
+                        "outline-variant": "#c6c6cd",
+                        "on-secondary-fixed": "#001a42",
+                        "error": "#ba1a1a",
+                        "surface-container-highest": "#d3e4fe",
+                        "tertiary-fixed": "#89f5e7",
+                        "on-surface": "#0b1c30",
+                        "on-surface-variant": "#45464d",
+                        "on-error": "#ffffff",
+                        "outline": "#76777d",
+                        "error-container": "#ffdad6",
+                        "surface-container-low": "#eff4ff",
+                        "on-tertiary-container": "#0c9488",
+                        "secondary-fixed-dim": "#adc6ff",
+                        "on-primary-container": "#7c839b",
+                        "surface-bright": "#f8f9ff",
+                        "on-tertiary-fixed": "#00201d",
+                        "inverse-surface": "#213145",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#004395",
+                        "primary-fixed": "#dae2fd",
+                        "tertiary-fixed-dim": "#6bd8cb",
+                        "inverse-on-surface": "#eaf1ff",
+                        "on-tertiary-fixed-variant": "#005049",
+                        "surface-variant": "#d3e4fe",
+                        "on-error-container": "#93000a",
+                        "primary-container": "#131b2e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "lg": "24px",
+                        "base": "8px",
+                        "container-margin": "24px",
+                        "sm": "12px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Geist"],
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg-mobile": ["Geist"],
+                        "mono-data": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "display": ["Geist"],
+                        "headline-md": ["Geist"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "mono-data": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .camera-overlay {
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(15, 23, 42, 0) 20%, rgba(15, 23, 42, 0) 80%, rgba(15, 23, 42, 0.4) 100%);
+        }
+        .bounding-box {
+            border: 2px solid #0d9488;
+            box-shadow: 0 0 10px rgba(13, 148, 136, 0.5);
+            animation: pulse-border 2s infinite;
+        }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(13, 148, 136, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, 0); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex antialiased">
+<!-- SideNavBar -->
+<nav class="w-[240px] h-screen fixed left-0 top-0 border-r border-outline-variant bg-surface flex flex-col p-md z-40 hidden md:flex">
+<div class="mb-xl px-2">
+<h1 class="font-display text-display text-primary">SAS</h1>
+<div class="mt-4">
+<p class="font-headline-md text-headline-md text-primary">SAS Admin</p>
+<p class="font-label-sm text-label-sm text-on-surface-variant">Institutional Control</p>
+</div>
+</div>
+<div class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 ease-in-out scale-95 active:scale-90 transition-transform rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-label-sm text-label-sm">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 ease-in-out scale-95 active:scale-90 transition-transform rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-label-sm text-label-sm">Management</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 ease-in-out scale-95 active:scale-90 transition-transform rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="assessment">assessment</span>
+<span class="font-label-sm text-label-sm">Reports</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 bg-secondary-container text-on-secondary-container font-bold rounded-lg transition-colors duration-200 ease-in-out scale-95 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="face">face</span>
+<span class="font-label-sm text-label-sm">Live Recognition</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 ease-in-out scale-95 active:scale-90 transition-transform rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="auto_stories">auto_stories</span>
+<span class="font-label-sm text-label-sm">My Subjects</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-on-surface-variant hover:bg-surface-container-low transition-colors duration-200 ease-in-out scale-95 active:scale-90 transition-transform rounded-lg" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label-sm text-label-sm">Attendance History</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col md:ml-[240px] min-h-screen">
+<!-- TopNavBar -->
+<header class="h-16 w-full sticky top-0 z-50 border-b border-outline-variant bg-surface flex justify-between items-center px-lg">
+<div class="flex items-center gap-4">
+<div class="font-headline-md text-headline-md font-bold text-primary hidden md:block">Student Attendance System</div>
+<div class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary md:hidden">SAS</div>
+</div>
+<div class="flex items-center gap-2">
+<button class="text-on-surface-variant hover:bg-surface-container-high rounded-full p-2 focus:ring-2 focus:ring-secondary-container">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-high rounded-full p-2 focus:ring-2 focus:ring-secondary-container">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<img alt="Administrator profile" class="w-8 h-8 rounded-full border border-outline-variant ml-2" data-alt="A professional headshot of an educational administrator in a modern office setting. The lighting is bright and even, highlighting a trustworthy and efficient persona. The image is cropped in a tight circle, suitable for a profile avatar in a high-tech corporate SaaS application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDCAJQa4ksGlWGGL-6-Ah6uHfNpkYKoif2ejjTVMYJBIEYgoylpzXJs0KogspNpoIaRcYYfSZFzh3I_cnDfjFtUtASAKy8HEDJ4vk3YifBAWovE9TK9GSN20RAD-6ylnuCGkBKSqppQdmU1GKiP_3pK8c6nVUQ1gqCVJMGK54juSD8yaDqsd4d50gDXe_gwoQ4MpMhf_B7LOjC217b3jXfA7f6t8I0DX6wRLqyC8LlOgOqmtCohb8Ll"/>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 p-lg md:p-container-margin grid grid-cols-1 lg:grid-cols-12 gap-lg overflow-hidden h-[calc(100vh-64px)]">
+<!-- Camera Viewport (Left/Center) -->
+<section class="lg:col-span-8 flex flex-col bg-[#0F172A] rounded-xl overflow-hidden relative shadow-sm border border-[#334155]">
+<!-- Camera Header Overlay -->
+<div class="absolute top-0 left-0 w-full p-md flex justify-between items-start z-10 camera-overlay backdrop-blur-[2px]">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-white">CS 401 - Artificial Intelligence</h2>
+<p class="font-body-md text-body-md text-slate-300 flex items-center gap-2 mt-1">
+<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Live Feed • Room 302
+                        </p>
+</div>
+<button class="bg-error text-on-error px-4 py-2 rounded-lg font-label-sm text-label-sm flex items-center gap-2 hover:bg-error-container hover:text-on-error-container transition-colors">
+<span class="material-symbols-outlined text-[18px]">stop_circle</span>
+                        Stop Session
+                    </button>
+</div>
+<!-- Camera Feed Simulation -->
+<div class="flex-1 relative bg-black/40 overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 bg-cover bg-center opacity-60 mix-blend-luminosity" data-alt="A wide-angle, slightly distorted camera feed view of a modern university lecture hall. Several students are visible sitting at desks, engaged in learning. The lighting is typical classroom fluorescent, slightly dim but clear enough for facial recognition. The overall aesthetic mimics a security or AI scanning camera viewpoint in a high-tech educational environment." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAWZfk_YMC15W6gG6Ua8ZlUadX8X-_dPfFxA_hwMMP8ohlqxgrhGnuVLELzJmf2ipO-JCz_x7wcQh1WVDyMec9RzPyRu-fLUiGZdBGFKnqxwO7g58Zg7ARhbQOAXGikR5VXYA2a5pNiOtY1jSVse_x0GvpNUHfwA2FeL8b92WXezbqJiGd_6gekavF_FhL4WoA1zSR1yALuOtaI1j00bkfgQM_x54GtEFNALQhbtPDIsxEQY9KOTb3U')"></div>
+<!-- Bounding Box 1 -->
+<div class="absolute top-[30%] left-[25%] w-[120px] h-[150px] bounding-box rounded-sm">
+<div class="absolute -top-6 -right-2 bg-[#0F172A]/80 backdrop-blur-md border border-[#0d9488] px-2 py-1 rounded text-white font-mono-data text-mono-data whitespace-nowrap flex items-center gap-1 shadow-lg">
+<span class="material-symbols-outlined text-[14px] text-[#0d9488]">verified</span>
+                            Eleanor Shellstrop | 98.7%
+                        </div>
+</div>
+<!-- Bounding Box 2 -->
+<div class="absolute top-[45%] left-[60%] w-[100px] h-[130px] bounding-box rounded-sm">
+<div class="absolute -top-6 -right-2 bg-[#0F172A]/80 backdrop-blur-md border border-[#0d9488] px-2 py-1 rounded text-white font-mono-data text-mono-data whitespace-nowrap flex items-center gap-1 shadow-lg">
+<span class="material-symbols-outlined text-[14px] text-[#0d9488]">verified</span>
+                            Chidi Anagonye | 95.2%
+                        </div>
+</div>
+<!-- Scanning Grid Overlay -->
+<div class="absolute inset-0 pointer-events-none" style="background-image: linear-gradient(rgba(13, 148, 136, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(13, 148, 136, 0.1) 1px, transparent 1px); background-size: 40px 40px;"></div>
+</div>
+<!-- Camera Footer Stats -->
+<div class="bg-[#0F172A] border-t border-[#334155] p-sm flex justify-between items-center text-slate-300 font-label-sm text-label-sm z-10">
+<div class="flex gap-6">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">visibility</span> Processing 24 FPS</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">memory</span> AI Confidence: High</span>
+</div>
+<div>
+                        Marked: 18 / 32
+                    </div>
+</div>
+</section>
+<!-- Sidebar / Recent Recognitions (Right) -->
+<aside class="lg:col-span-4 bg-white rounded-xl border border-outline-variant flex flex-col h-full overflow-hidden">
+<div class="p-md border-b border-outline-variant bg-slate-50 flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-container">history_toggle_off</span>
+                        Recent Recognitions
+                    </h3>
+<span class="bg-secondary-container text-on-secondary-container px-2 py-1 rounded font-mono-data text-[11px]">LIVE</span>
+</div>
+<div class="flex-1 overflow-y-auto p-2 space-y-2">
+<!-- Item 1 -->
+<div class="flex items-center gap-3 p-3 rounded-lg border border-transparent hover:border-outline-variant hover:bg-surface-container-low transition-colors group cursor-default">
+<img class="w-10 h-10 rounded object-cover border border-outline-variant" data-alt="A small, clear headshot of a female university student with blonde hair. High-quality lighting, professional educational context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfvcb72ETT4nbCweolGN9wJyJMQytUYEDBbfR-wRmgm5fl-Ne6mqnSgJIGPBa0pBZhS71_0OwGyT95hn7LFk_S3jvtRcQxnS4S_CyqTUPgx9pWZBh_rtHvVmg0iY8YdYY1dGg5zmKaPBkGwzuPq4Va4pwKXIC6CqIW7B_8NIaQ4Dgm_EdGJZPAr_YcjeC-bPJE93T-o75wgYAmj_Bp9rE8qzcB_ZDHgqFX3XjeCSeO2PSLkiAuWXYG"/>
+<div class="flex-1 min-w-0">
+<p class="font-label-sm text-label-sm text-primary truncate">Eleanor Shellstrop</p>
+<p class="font-mono-data text-[11px] text-on-surface-variant truncate">ID: 90210-ES</p>
+</div>
+<div class="text-right">
+<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded font-label-sm text-[10px]">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Present
+                            </span>
+<p class="font-mono-data text-[10px] text-on-surface-variant mt-1">Just now</p>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex items-center gap-3 p-3 rounded-lg border border-transparent hover:border-outline-variant hover:bg-surface-container-low transition-colors group cursor-default">
+<img class="w-10 h-10 rounded object-cover border border-outline-variant" data-alt="A small, clear headshot of a male university student with glasses. High-quality lighting, professional educational context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmO7ELvTXAOgkUHS_7dDmq6kkBzQwsFisHUjKWZ382l0_sqxsSp_23buqSev92xi9CNgDZKbP9sWo9Isqo9DagajJmJJ3QkVZBfSz6USXoC7G7XMLQQ8JF-STXb4d4DCXkJfCIEANTg1bS5HXLKT19-77ylK42rYrzuGrXAJQt7pOB-rWDq1M4NCj2jxYCVMLsBFUbBEXE5DaM_IONrS_-yimBmVAYqGU8TRQqkwhgqB1MffHOTQ5-"/>
+<div class="flex-1 min-w-0">
+<p class="font-label-sm text-label-sm text-primary truncate">Chidi Anagonye</p>
+<p class="font-mono-data text-[11px] text-on-surface-variant truncate">ID: 88123-CA</p>
+</div>
+<div class="text-right">
+<span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded font-label-sm text-[10px]">
+<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Present
+                            </span>
+<p class="font-mono-data text-[10px] text-on-surface-variant mt-1">2 mins ago</p>
+</div>
+</div>
+<!-- Item 3 (Already Marked) -->
+<div class="flex items-center gap-3 p-3 rounded-lg border border-transparent hover:border-outline-variant hover:bg-surface-container-low transition-colors group cursor-default opacity-75">
+<img class="w-10 h-10 rounded object-cover border border-outline-variant grayscale-[30%]" data-alt="A small, clear headshot of a female university student looking slightly annoyed. High-quality lighting, professional educational context." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDx1fobEkUXVu_EhelS8WVTLD2gpPxWCPoKI-HNBpCIV0ghD2eFpholBlFZdCyhAghqFSF-ySj0TLtEiyGFRlkQltBuQfayTa4KBP595obiuodGo17HESrQAvncPhmtkLU04I0VgetqUL946bSHwPMBVIjYOiL-6wVLtj4MfDazaevwpGdLvLoMhML-Ty7qWVwENt82QgGPlqUwOBfZxUT3ZnmWmRAJK6_pOvlrmqk6lhTXQohLJOau"/>
+<div class="flex-1 min-w-0">
+<p class="font-label-sm text-label-sm text-primary truncate">Tahani Al-Jamil</p>
+<p class="font-mono-data text-[11px] text-on-surface-variant truncate">ID: 77492-TA</p>
+</div>
+<div class="text-right">
+<span class="inline-flex items-center gap-1 bg-slate-100 text-slate-600 border border-slate-200 px-2 py-0.5 rounded font-label-sm text-[10px]">
+<span class="material-symbols-outlined text-[10px]">check</span> Logged
+                            </span>
+<p class="font-mono-data text-[10px] text-on-surface-variant mt-1">5 mins ago</p>
+</div>
+</div>
+</div>
+<!-- Progress summary -->
+<div class="p-4 border-t border-outline-variant bg-surface-container-low">
+<div class="flex justify-between items-end mb-2">
+<span class="font-label-sm text-label-sm text-primary">Class Attendance</span>
+<span class="font-mono-data text-mono-data text-secondary-container">56%</span>
+</div>
+<div class="w-full bg-surface-variant h-1 rounded-full overflow-hidden">
+<div class="bg-secondary-container h-full rounded-full transition-all duration-1000 ease-out" style="width: 56%"></div>
+</div>
+</div>
+</aside>
+</main>
+</div>
+</body></html>

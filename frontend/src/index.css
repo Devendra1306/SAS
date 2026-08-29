@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 230 100% 98.6%; /* #f8f9ff */
+    --foreground: 213 62% 12%;   /* #0b1c30 */
+
+    --card: 0 0% 100%;           /* #ffffff */
+    --card-foreground: 213 62% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 213 62% 12%;
+
+    --primary: 213 62% 12%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 216 100% 97%;   /* #eff4ff */
+    --secondary-foreground: 215 100% 37%;
+
+    --muted: 216 50% 95%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 218 80% 51%;       /* #2170e4 */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;        /* #e2e8f0 */
+    --input: 214 32% 91%;
+    --ring: 218 80% 51%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-[#f8f9ff] text-[#0b1c30] font-sans;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
