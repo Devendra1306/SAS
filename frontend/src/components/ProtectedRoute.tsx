@@ -11,8 +11,11 @@ const ProtectedRoute: React.FC<Props> = ({ allowedRoles }) => {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
+      <div className="flex h-screen items-center justify-center bg-[#f8f9ff]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-9 w-9 animate-spin rounded-full border-3 border-[#2170e4] border-t-transparent shadow-xs" />
+          <p className="text-xs font-semibold text-[#64748b] font-mono tracking-wider">AUTHENTICATING...</p>
+        </div>
       </div>
     )
   }

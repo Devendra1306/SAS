@@ -1,14 +1,16 @@
 import React, { Suspense, lazy } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
+import AdminLayout from './layouts/AdminLayout'
+import FacultyLayout from './layouts/FacultyLayout'
+import StudentLayout from './layouts/StudentLayout'
 
-// Lazy load pages
+// Lazy load public pages
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 const AdminFacultyLogin = lazy(() => import('./pages/auth/AdminFacultyLogin'))
 const StudentLogin = lazy(() => import('./pages/auth/StudentLogin'))
 
 // Admin pages
-const AdminLayout = lazy(() => import('./layouts/AdminLayout'))
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'))
 const AdminStudents = lazy(() => import('./pages/admin/Students'))
 const RegisterStudent = lazy(() => import('./pages/admin/RegisterStudent'))
@@ -21,7 +23,6 @@ const AdminReports = lazy(() => import('./pages/admin/Reports'))
 const AdminSettings = lazy(() => import('./pages/admin/Settings'))
 
 // Faculty pages
-const FacultyLayout = lazy(() => import('./layouts/FacultyLayout'))
 const FacultyDashboard = lazy(() => import('./pages/faculty/Dashboard'))
 const MySubjects = lazy(() => import('./pages/faculty/MySubjects'))
 const StartAttendance = lazy(() => import('./pages/faculty/StartAttendance'))
@@ -30,7 +31,6 @@ const FacultyAttendanceHistory = lazy(() => import('./pages/faculty/AttendanceHi
 const FacultyReports = lazy(() => import('./pages/faculty/Reports'))
 
 // Student pages
-const StudentLayout = lazy(() => import('./layouts/StudentLayout'))
 const StudentDashboard = lazy(() => import('./pages/student/Dashboard'))
 const TodayAttendance = lazy(() => import('./pages/student/TodayAttendance'))
 const SubjectAttendance = lazy(() => import('./pages/student/SubjectAttendance'))
@@ -39,10 +39,10 @@ const MonthlyStats = lazy(() => import('./pages/student/MonthlyStats'))
 const StudentProfile = lazy(() => import('./pages/student/Profile'))
 
 const PageLoader = () => (
-  <div className="flex h-screen items-center justify-center bg-slate-50">
+  <div className="flex h-screen items-center justify-center bg-[#f8f9ff]">
     <div className="flex flex-col items-center gap-3">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent" />
-      <p className="text-sm text-slate-500">Loading...</p>
+      <div className="h-9 w-9 animate-spin rounded-full border-3 border-[#2170e4] border-t-transparent shadow-xs" />
+      <p className="text-xs font-semibold text-[#64748b] font-mono tracking-wider">LOADING SAS...</p>
     </div>
   </div>
 )
@@ -105,3 +105,4 @@ export default function App() {
     </Suspense>
   )
 }
+
