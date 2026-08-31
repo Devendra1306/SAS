@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* OKLCH-based theme mapped to CSS custom properties */
     --background: 230 100% 98.6%; /* #f8f9ff */
     --foreground: 213 62% 12%;   /* #0b1c30 */
 
@@ -33,6 +34,13 @@
     --ring: 218 80% 51%;
 
     --radius: 0.75rem;
+
+    /* Custom OKLCH Design Tokens */
+    --brand-primary: oklch(52% 0.22 258);
+    --brand-hover: oklch(46% 0.21 258);
+    --brand-glow: oklch(65% 0.20 258 / 0.25);
+    --surface-dark: oklch(14% 0.035 255);
+    --surface-card-dark: oklch(18% 0.04 255);
   }
 }
 
@@ -54,10 +62,100 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Smooth focus rings */
+  /* Micro-transitions for interactive elements */
   input, button, select, textarea {
     transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
   }
+}
+
+/* ─── Premium Visual Utilities ──────────────────────────────────────────────── */
+
+/* Subtle Glass Panel with Inner Highlight */
+.glass-panel-dark {
+  background: rgba(11, 28, 48, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 24px 60px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+}
+
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 6px 16px -2px rgba(0, 88, 190, 0.04),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Laser Scan Animation */
+@keyframes laser-sweep {
+  0% { top: 0%; opacity: 0.8; }
+  50% { top: 98%; opacity: 1; }
+  100% { top: 0%; opacity: 0.8; }
+}
+
+.animate-laser {
+  animation: laser-sweep 4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+/* Radar Pulse Animation */
+@keyframes radar-pulse {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+.animate-radar {
+  animation: radar-pulse 3s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+/* Subtle Shimmer Effect */
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-shimmer {
+  animation: shimmer-sweep 2.5s infinite;
+}
+
+/* Glow Bloom */
+.glow-blue {
+  box-shadow: 0 0 32px -4px rgba(33, 112, 228, 0.35);
+}
+
+.glow-emerald {
+  box-shadow: 0 0 32px -4px rgba(16, 185, 129, 0.35);
+}
+
+/* Precision Crosshairs (Container Lines Skill) */
+.corner-crosshair {
+  position: relative;
+}
+.corner-crosshair::before,
+.corner-crosshair::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-color: rgba(96, 165, 250, 0.4);
+  pointer-events: none;
+}
+.corner-crosshair::before {
+  top: -1px;
+  left: -1px;
+  border-top: 1.5px solid;
+  border-left: 1.5px solid;
+}
+.corner-crosshair::after {
+  bottom: -1px;
+  right: -1px;
+  border-bottom: 1.5px solid;
+  border-right: 1.5px solid;
 }
 
 /* Custom Scrollbars */
@@ -76,10 +174,4 @@
   background: #94a3b8;
 }
 
-/* Subtle Shimmer Animation */
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
 
