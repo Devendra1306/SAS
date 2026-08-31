@@ -138,7 +138,7 @@ export default function LandingPage() {
       title: 'ArcFace 512-D Identity Match',
       telemetry: 'Cosine Similarity: 0.994 · Latency: 38ms',
       status: 'IDENTIFIED',
-      detail: 'Biometric vector resolved to registered student: Devendra Sagar.',
+      detail: 'Biometric vector match verified against enrolled institutional roster.',
       badgeColor: 'text-[#7c3aed] bg-[#f5f3ff] border-[#ddd6fe]',
       accentColor: '#7c3aed',
     },
@@ -149,7 +149,7 @@ export default function LandingPage() {
       title: 'Immutable Ledger Log',
       telemetry: 'MongoDB Atlas Write · Status: PRESENT',
       status: 'RECORDED',
-      detail: 'Timestamp 09:02:14 AM logged. Telemetry broadcasted to portal.',
+      detail: 'Timestamp 09:02:14 AM logged. Telemetry broadcasted to live portal.',
       badgeColor: 'text-[#059669] bg-[#ecfdf5] border-[#a7f3d0]',
       accentColor: '#059669',
     },
@@ -514,7 +514,7 @@ export default function LandingPage() {
                   </div>
 
                   {/* Interactive Facial Viewfinder Frame */}
-                  <div className="relative h-48 sm:h-52 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between p-4 overflow-hidden mb-4">
+                  <div className="relative h-56 sm:h-60 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col justify-between p-4.5 overflow-hidden mb-4">
                     {/* Viewfinder Corner Reticles */}
                     <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-[#2170e4]" />
                     <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-[#2170e4]" />
@@ -522,7 +522,7 @@ export default function LandingPage() {
                     <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-[#2170e4]" />
 
                     {/* Target Lock Center Graphic */}
-                    <div className="relative my-auto flex flex-col items-center justify-center">
+                    <div className="relative my-auto flex flex-col items-center justify-center py-2">
                       <div className="relative w-20 h-20 rounded-full border border-dashed border-[#2170e4]/50 flex items-center justify-center">
                         <div className="w-14 h-14 rounded-full bg-[#0058be]/20 border border-[#60a5fa]/40 flex items-center justify-center text-[#60a5fa]">
                           <UserCheck className="w-7 h-7" />
@@ -538,13 +538,13 @@ export default function LandingPage() {
                           initial={{ opacity: 0, y: 6 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -6 }}
-                          className="mt-2 text-center"
+                          className="mt-3 text-center px-3 py-1 rounded-full bg-slate-950/80 border border-slate-800/80 shadow-sm"
                         >
-                          <span className="text-xs font-mono font-bold text-white tracking-wide">
+                          <span className="text-[11px] font-mono font-bold text-white tracking-wide block">
                             {activeWorkflow === 0 && 'Target: Student Geofence In-Range'}
                             {activeWorkflow === 1 && 'Optical Stream: Liveness Confirmed'}
-                            {activeWorkflow === 2 && 'Identity: Devendra Sagar (23A81A4301)'}
-                            {activeWorkflow === 3 && 'Result: PRESENT (09:02 AM) Logged'}
+                            {activeWorkflow === 2 && 'Identity: Enrolled Student Match (99.4% Cosine)'}
+                            {activeWorkflow === 3 && 'Result: PRESENT Recorded (09:02 AM)'}
                           </span>
                         </motion.div>
                       </AnimatePresence>
@@ -552,7 +552,7 @@ export default function LandingPage() {
 
                     {/* Bottom Status Bar */}
                     <div className="flex justify-between items-center text-[10px] font-mono text-slate-400 pt-2 border-t border-slate-800/60">
-                      <span>Telemetry: 16.8183° N, 81.5284° E</span>
+                      <span>GPS Telemetry: 16.8183° N, 81.5284° E</span>
                       <span className="text-emerald-400 font-bold">MATCH: 99.4% COSINE</span>
                     </div>
                   </div>
