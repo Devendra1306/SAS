@@ -31,6 +31,7 @@ export default function LiveRecognition() {
   const [manualSelectId, setManualSelectId] = useState<string>('')
   const [rosterSearch, setRosterSearch] = useState<string>('')
   const [ending, setEnding] = useState(false)
+  const [cameraError, setCameraError] = useState<string | null>(null)
 
   // Fetch session details and class roster
   const { data: sessionData, isLoading, refetch: refetchRoster } = useQuery({
@@ -232,7 +233,16 @@ export default function LiveRecognition() {
             <CardContent className="p-4 space-y-4">
               {/* Webcam Viewport with Corner Reticle & Laser Sweep */}
               <div className="relative aspect-4/3 w-full bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-inner flex items-center justify-center">
-                {capturedSnapshot ? (
+                {cameraError ? (
+                  <div className="p-6 text-center text-slate-300 space-y-3">
+                    <Camera className="w-10 h-10 text-amber-400 mx-auto" />
+                    <p className="font-bold text-sm text-white">Camera Access Issue</p>
+                    <p className="text-xs text-slate-400 max-w-sm">{cameraError}</p>
+                    <p className="text-[11px] text-amber-300">
+                      You can still take attendance by selecting students directly from the roster on the right.
+                    </p>
+                  </div>
+                ) : capturedSnapshot ? (
                   <img src={capturedSnapshot} alt="Captured Student Snapshot" className="w-full h-full object-cover" />
                 ) : (
                   <Webcam
@@ -240,6 +250,7 @@ export default function LiveRecognition() {
                     audio={false}
                     screenshotFormat="image/jpeg"
                     videoConstraints={{ facingMode: 'user', width: 640, height: 480 }}
+                    onUserMediaError={(err) => setCameraError(typeof err === 'string' ? err : 'Camera access was denied or device is not available.')}
                     className="w-full h-full object-cover"
                   />
                 )}
