@@ -26,6 +26,7 @@ const AdminSettings = lazy(() => import('./pages/admin/Settings'))
 const FacultyDashboard = lazy(() => import('./pages/faculty/Dashboard'))
 const MySubjects = lazy(() => import('./pages/faculty/MySubjects'))
 const StartAttendance = lazy(() => import('./pages/faculty/StartAttendance'))
+const SpotAttendance = lazy(() => import('./pages/faculty/SpotAttendance'))
 const LiveRecognition = lazy(() => import('./pages/faculty/LiveRecognition'))
 const FacultyAttendanceHistory = lazy(() => import('./pages/faculty/AttendanceHistory'))
 const FacultyReports = lazy(() => import('./pages/faculty/Reports'))
@@ -80,6 +81,7 @@ export default function App() {
             <Route path="dashboard" element={<FacultyDashboard />} />
             <Route path="subjects" element={<MySubjects />} />
             <Route path="attendance/start" element={<StartAttendance />} />
+            <Route path="attendance/spot" element={<SpotAttendance />} />
             <Route path="attendance/live/:sessionId" element={<LiveRecognition />} />
             <Route path="attendance/history" element={<FacultyAttendanceHistory />} />
             <Route path="reports" element={<FacultyReports />} />

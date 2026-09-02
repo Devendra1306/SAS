@@ -8,11 +8,11 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-# Tunable thresholds
-BLUR_THRESHOLD = 80.0        # Laplacian variance threshold
-MIN_BRIGHTNESS = 40.0        # Mean pixel value (0-255)
-MAX_BRIGHTNESS = 220.0
-MIN_FACE_SIZE = 60           # Minimum face dimension in pixels
+# Tunable thresholds (tuned for 112x112 aligned face crops and standard webcams)
+BLUR_THRESHOLD = 18.0        # Laplacian variance threshold
+MIN_BRIGHTNESS = 25.0        # Mean pixel value (0-255)
+MAX_BRIGHTNESS = 235.0
+MIN_FACE_SIZE = 40           # Minimum face dimension in pixels
 
 
 class FaceQualityChecker:

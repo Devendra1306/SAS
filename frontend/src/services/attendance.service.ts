@@ -30,4 +30,8 @@ export const attendanceService = {
   getLowAttendance: (threshold: number = 50) => api.get('/attendance/low', { params: { threshold } }).then(r => r.data),
   getHighAttendance: (threshold: number = 90) => api.get('/attendance/high', { params: { threshold } }).then(r => r.data),
   updateAttendance: (id: string, data: { status: string; reason?: string }) => api.put(`/attendance/${id}`, data).then(r => r.data),
+  spotMark: (data: { session_id?: string; student_id?: string; latitude?: number; longitude?: number; accuracy?: number }) =>
+    api.post('/attendance/spot-mark', data).then(r => r.data),
+  getTrackedStudents: (params?: { session_id?: string }) =>
+    api.get('/attendance/tracked-students', { params }).then(r => r.data),
 }

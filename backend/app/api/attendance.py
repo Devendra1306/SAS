@@ -196,6 +196,7 @@ async def get_session_roster(
 
 # ── One-by-One Recognition Endpoint ──────────────────────────────────────────
 
+@router.post("/recognize", response_model=RecognizeOneResponse)
 @router.post("/recognize-one", response_model=RecognizeOneResponse)
 async def recognize_one_student(
     request: RecognizeOneRequest,
@@ -334,7 +335,13 @@ async def recognize_one_student(
             total_enrolled=total_e
         )
 
-    student = await db.students.find_one({"student_id": matched_student_id})
+    student = await db.students.find_one({
+        "$or": [
+            {"student_id": matched_student_id},
+            {"student_id": matched_student_id.upper()},
+            {"student_id": matched_student_id.lower()}
+        ]
+    })
     if not student:
         total_p, total_e = await get_totals()
         return RecognizeOneResponse(
@@ -465,3 +472,231 @@ async def update_attendance(
     if not record:
         raise HTTPException(status_code=404, detail="Attendance record not found")
     return record
+
+
+# ── On-The-Spot Attendance Endpoints ──────────────────────────────────────────
+
+class SpotMarkRequest(BaseModel):
+    session_id: Optional[str] = None
+    student_id: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    accuracy: Optional[float] = None
+
+
+@router.post("/spot-mark")
+async def spot_mark_attendance(
+    request: SpotMarkRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Marks attendance on the spot using real-time location telemetry.
+    Students can mark themselves present when within the classroom boundaries.
+    Faculty can 1-click mark nearby students present.
+    """
+    db = get_database()
+    role = current_user.get("role")
+
+    # 1. Resolve student record
+    student = None
+    if role == "STUDENT":
+        student = await db.students.find_one({
+            "$or": [
+                {"user_id": str(current_user["_id"])},
+                {"student_id": current_user.get("username")},
+                {"email": current_user.get("email")}
+            ]
+        })
+        if not student:
+            raise HTTPException(status_code=404, detail="Student profile not found")
+    elif role in ["FACULTY", "ADMIN"]:
+        if not request.student_id:
+            raise HTTPException(status_code=400, detail="Student ID required for faculty spot-marking")
+        student = await db.students.find_one({
+            "$or": [
+                {"student_id": request.student_id.upper()},
+                {"student_id": request.student_id},
+                {"_id": ObjectId(request.student_id) if ObjectId.is_valid(request.student_id) else None}
+            ]
+        })
+        if not student:
+            raise HTTPException(status_code=404, detail=f"Student {request.student_id} not found")
+
+    student_id = student["student_id"]
+
+    # 2. Resolve active session
+    session = None
+    if request.session_id:
+        session = await attendance_service.get_session(request.session_id)
+        if not session or session.get("status") != "ACTIVE":
+            raise HTTPException(status_code=404, detail="Attendance session not active or not found")
+    else:
+        # Find active session matching student's department/year/section
+        session = await db.attendance_sessions.find_one({
+            "department": student.get("department"),
+            "year": int(student.get("year", 4)),
+            "section": student.get("section", "A"),
+            "status": "ACTIVE"
+        })
+        if not session:
+            # Fallback: find any active session created today
+            session = await db.attendance_sessions.find_one({"status": "ACTIVE"})
+
+    if not session:
+        raise HTTPException(
+            status_code=400,
+            detail="No active lecture session found for your class right now. Please wait for faculty to start the session."
+        )
+
+    session_id = str(session.get("_id") or session.get("id"))
+
+    # 3. Location verification
+    lat = request.latitude
+    lon = request.longitude
+    acc = request.accuracy
+
+    if lat is None or lon is None:
+        # Fall back to student's last recorded location
+        last_loc = student.get("last_location") or current_user.get("last_location")
+        if last_loc:
+            lat = last_loc.get("latitude")
+            lon = last_loc.get("longitude")
+            acc = last_loc.get("accuracy")
+
+    if lat is not None and lon is not None:
+        loc_res = await attendance_service.verify_faculty_location(
+            latitude=lat,
+            longitude=lon,
+            classroom_id=session.get("classroom_id"),
+            accuracy=acc
+        )
+        is_verified = loc_res.get("verified", False)
+        distance = loc_res.get("distance_meters", 0.0)
+    else:
+        is_verified = True
+        distance = 0.0
+
+    # If student is self-marking, enforce location verification unless session bypassed
+    if role == "STUDENT" and not is_verified and not session.get("location_bypass"):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Location not verified: You are {round(distance)}m from the classroom pin (must be within 500m to give spot attendance)."
+        )
+
+    # 4. Mark attendance
+    try:
+        record = await attendance_service.mark_attendance({
+            "session_id": session_id,
+            "student_id": student_id,
+            "status": "PRESENT",
+            "recognition_score": 1.0,
+            "verification_method": "LOCATION_SPOT"
+        })
+        status_res = "PRESENT"
+        msg = f"✓ On-the-spot attendance recorded for {student['name']} ({student_id})!"
+    except ValueError as ve:
+        if "DUPLICATE" in str(ve):
+            status_res = "DUPLICATE"
+            msg = f"{student['name']} ({student_id}) is already marked Present for this session."
+        else:
+            raise HTTPException(status_code=400, detail=str(ve))
+
+    # Broadcast via WebSocket
+    try:
+        await broadcast_to_session(session_id, {
+            "type": "ATTENDANCE_MARKED",
+            "session_id": session_id,
+            "student_id": student_id,
+            "name": student.get("name"),
+            "status": status_res,
+            "method": "LOCATION_SPOT",
+            "distance_meters": distance
+        })
+    except Exception:
+        pass
+
+    return {
+        "success": True,
+        "status": status_res,
+        "student_id": student_id,
+        "name": student.get("name"),
+        "session_id": session_id,
+        "distance_meters": distance,
+        "message": msg
+    }
+
+
+@router.get("/tracked-students")
+async def list_tracked_students(
+    session_id: Optional[str] = None,
+    current_user: dict = Depends(require_faculty)
+):
+    """
+    Returns real-time location telemetry and spot-attendance readiness for students.
+    Shows who is currently logged in, their coordinates, distance from classroom,
+    and attendance status for the active session.
+    """
+    db = get_database()
+    query = {"is_active": True}
+
+    session = None
+    if session_id:
+        session = await attendance_service.get_session(session_id)
+        if session:
+            query["department"] = session.get("department")
+            query["year"] = int(session.get("year", 4))
+            query["section"] = session.get("section", "A")
+
+    students = await db.students.find(query).to_list(100)
+    attendance_records = []
+    if session_id:
+        attendance_records = await db.attendance.find({"session_id": session_id}).to_list(200)
+
+    marked_map = {r["student_id"]: r for r in attendance_records}
+
+    target_lat = session.get("faculty_latitude") if session else 16.80932
+    target_lon = session.get("faculty_longitude") if session else 81.54415
+
+    results = []
+    for s in students:
+        sid = s.get("student_id")
+        last_loc = s.get("last_location")
+        rec = marked_map.get(sid)
+
+        dist = None
+        in_range = False
+        if last_loc and last_loc.get("latitude") and last_loc.get("longitude"):
+            from app.services.attendance_service import calculate_haversine_distance
+            dist = calculate_haversine_distance(
+                float(last_loc["latitude"]),
+                float(last_loc["longitude"]),
+                float(target_lat or 16.80932),
+                float(target_lon or 81.54415)
+            )
+            in_range = dist <= 500.0
+
+        results.append({
+            "id": str(s["_id"]),
+            "student_id": sid,
+            "name": s.get("name"),
+            "roll_number": s.get("roll_number", sid),
+            "department": s.get("department"),
+            "year": s.get("year"),
+            "section": s.get("section"),
+            "is_face_enrolled": s.get("is_face_enrolled", False) or s.get("face_enrolled", False),
+            "last_location": last_loc,
+            "distance_meters": dist,
+            "in_classroom_range": in_range,
+            "is_marked": rec is not None,
+            "attendance_status": rec.get("status") if rec else "PENDING",
+            "verification_method": rec.get("verification_method") if rec else None,
+            "marked_at": rec.get("timestamp") if rec else None
+        })
+
+    return {
+        "session": session,
+        "total": len(results),
+        "in_range_count": len([r for r in results if r["in_classroom_range"]]),
+        "marked_count": len([r for r in results if r["is_marked"]]),
+        "students": results
+    }

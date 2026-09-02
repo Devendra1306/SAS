@@ -4,12 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookOpen, Clock, PlayCircle,
   FileSpreadsheet, LogOut, Search, Bell, Sparkles, User,
-  Menu, X
+  Menu, X, MapPin
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import ContentLoader from '@/components/ContentLoader'
+import { LocationStatusBadge } from '@/components/LocationStatusBadge'
 
 export default function FacultyLayout() {
   const { user, logout } = useAuth()
@@ -26,6 +27,7 @@ export default function FacultyLayout() {
     { label: 'Dashboard', path: '/faculty/dashboard', icon: LayoutDashboard },
     { label: 'My Subjects', path: '/faculty/subjects', icon: BookOpen },
     { label: 'Start Attendance', path: '/faculty/attendance/start', icon: PlayCircle },
+    { label: 'Spot Attendance', path: '/faculty/attendance/spot', icon: MapPin },
     { label: 'Attendance History', path: '/faculty/attendance/history', icon: Clock },
     { label: 'Class Reports', path: '/faculty/reports', icon: FileSpreadsheet },
   ]
@@ -173,6 +175,7 @@ export default function FacultyLayout() {
           </div>
 
           <div className="flex items-center gap-3">
+            <LocationStatusBadge />
             <button
               onClick={handleLogout}
               className="px-3 py-1.5 text-xs font-semibold text-[#ba1a1a] bg-[#ffdad6]/60 border border-[#ffdad6] hover:bg-[#ffdad6] active:scale-95 rounded-lg transition-all duration-150 flex items-center gap-1.5"

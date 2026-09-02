@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/Label'
 import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
+import { locationService } from '@/services/location.service'
 
 export default function StartAttendance() {
   const navigate = useNavigate()
@@ -74,34 +75,26 @@ export default function StartAttendance() {
     }
   }, [selectedClassroomId])
 
-  // Request Browser GPS
-  const requestCurrentLocation = useCallback(() => {
+  // Request Location Telemetry via Multi-tier Service
+  const requestCurrentLocation = useCallback(async () => {
     setGpsLoading(true)
     setGpsError(null)
 
-    if (!navigator.geolocation) {
-      setGpsError('Geolocation is not supported by your browser')
+    try {
+      const loc = await locationService.getCurrentLocation(true)
+      const coords = {
+        lat: loc.latitude,
+        lon: loc.longitude,
+        accuracy: loc.accuracy
+      }
+      setFacultyCoords(coords)
+      await verifyLocationWithCoords(coords.lat, coords.lon, coords.accuracy)
+    } catch (err: any) {
+      console.warn('Location Error:', err)
+      setGpsError('Could not acquire GPS pin. You can calibrate current location or use simulation.')
+    } finally {
       setGpsLoading(false)
-      return
     }
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const coords = {
-          lat: pos.coords.latitude,
-          lon: pos.coords.longitude,
-          accuracy: pos.coords.accuracy
-        }
-        setFacultyCoords(coords)
-        verifyLocationWithCoords(coords.lat, coords.lon, coords.accuracy)
-      },
-      (err) => {
-        console.warn('GPS Error:', err.message)
-        setGpsError('Browser GPS permission denied or Wi-Fi location unavailable. You can use simulation or calibration.')
-        setGpsLoading(false)
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    )
   }, [verifyLocationWithCoords])
 
   useEffect(() => {

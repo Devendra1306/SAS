@@ -3,8 +3,10 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import {
   GraduationCap, Calendar, BookOpen, Clock, AlertTriangle,
-  Award, CheckCircle2, ArrowRight, ShieldCheck, RefreshCw, Library
+  Award, CheckCircle2, ArrowRight, ShieldCheck, RefreshCw, Library,
+  MapPin, Navigation, Zap
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip
 } from 'recharts'
@@ -19,20 +21,41 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { formatDate, formatTime } from '@/utils/format'
 
 export default function StudentDashboard() {
-  const { user } = useAuth()
+  const { user, currentLocation, refreshLocation } = useAuth()
   const studentId = user?.student_id || user?.username || ''
+  const [markingSpot, setMarkingSpot] = React.useState(false)
 
-  const { data: rawAnalytics, isLoading: analyticsLoading } = useQuery({
+  const { data: rawAnalytics, isLoading: analyticsLoading, refetch: refetchAnalytics } = useQuery({
     queryKey: ['student-dashboard-analytics', studentId],
     queryFn: () => analyticsService.getStudentAnalytics(studentId),
     enabled: !!studentId,
   })
 
-  const { data: rawHistory, isLoading: historyLoading } = useQuery({
+  const { data: rawHistory, isLoading: historyLoading, refetch: refetchHistory } = useQuery({
     queryKey: ['student-recent-history', studentId],
     queryFn: () => attendanceService.getStudentAttendance(studentId),
     enabled: !!studentId,
   })
+
+  const handleGiveSpotAttendance = async () => {
+    setMarkingSpot(true)
+    try {
+      // Sync fresh location
+      const loc = await refreshLocation()
+      const res = await attendanceService.spotMark({
+        latitude: loc?.latitude || currentLocation?.latitude,
+        longitude: loc?.longitude || currentLocation?.longitude,
+        accuracy: loc?.accuracy || currentLocation?.accuracy
+      })
+      toast.success(res.message || '✓ Attendance marked on the spot!')
+      refetchAnalytics()
+      refetchHistory()
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || err.message || 'Spot attendance failed')
+    } finally {
+      setMarkingSpot(false)
+    }
+  }
 
   const subjectStats: any[] = rawAnalytics?.subject_stats || (Array.isArray(rawAnalytics) ? rawAnalytics : [])
   const historyList: any[] = rawHistory?.records || (Array.isArray(rawHistory) ? rawHistory : [])
@@ -50,16 +73,83 @@ export default function StudentDashboard() {
     { month: 'Current', percentage: overallPct },
   ]
 
+  const isVerifiedOnCampus = currentLocation?.verified_on_campus
+  const distToCampus = currentLocation?.distance_meters != null ? Math.round(currentLocation.distance_meters) : null
+
   return (
     <div className="max-w-[1400px] mx-auto space-y-8 font-sans">
       {/* Header Section */}
-      <div>
-        <h2 className="font-display text-3xl font-extrabold text-[#0b1c30] tracking-tight">
-          Welcome, {user?.name || 'Student'}
-        </h2>
-        <p className="text-sm text-[#64748b] mt-0.5">
-          {user?.student_id ? `${user.student_id} • ` : ''}Here is your live attendance record for the semester.
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="font-display text-3xl font-extrabold text-[#0b1c30] tracking-tight">
+            Welcome, {user?.name || 'Student'}
+          </h2>
+          <p className="text-sm text-[#64748b] mt-0.5">
+            {user?.student_id ? `${user.student_id} • ` : ''}Here is your live attendance record for the semester.
+          </p>
+        </div>
+
+        {/* Live Location Telemetry Chip */}
+        <div className="flex items-center gap-3">
+          <div className="bg-white border border-[#e2e8f0] px-3.5 py-2 rounded-xl text-xs flex items-center gap-2.5 shadow-2xs">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <div>
+              <span className="font-semibold text-[#0b1c30] block">
+                {currentLocation ? (currentLocation.city || 'Tadepalligudem') : 'Tracking Location...'}
+              </span>
+              <span className="text-[10px] text-[#64748b] font-mono block">
+                {distToCampus != null ? `${distToCampus}m from Campus Pin` : 'GPS Telemetry Active'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* On-The-Spot Attendance Action Card */}
+      <div className="bg-gradient-to-r from-[#0058be] to-[#0b1c30] rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-96 h-96 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2 max-w-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-mono">
+              <Zap className="w-3.5 h-3.5 text-amber-300" />
+              <span>Instant Geofenced Check-In</span>
+            </div>
+            <h3 className="font-display text-2xl font-bold tracking-tight">
+              Give Attendance On The Spot
+            </h3>
+            <p className="text-xs sm:text-sm text-[#93c5fd] leading-relaxed">
+              When inside the classroom, click below to immediately verify your live GPS pin against the ongoing faculty lecture session and mark your attendance.
+            </p>
+            <div className="flex items-center gap-2 pt-1 font-mono text-xs text-[#bfdbfe]">
+              <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+              <span>
+                Coordinates: {currentLocation ? `${currentLocation.latitude.toFixed(4)}, ${currentLocation.longitude.toFixed(4)}` : 'Acquiring...'}
+              </span>
+              {distToCampus != null && (
+                <span className="text-emerald-300 font-semibold">• ({distToCampus}m to Campus)</span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 shrink-0">
+            <Button
+              onClick={handleGiveSpotAttendance}
+              disabled={markingSpot}
+              isLoading={markingSpot}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs h-12 px-6 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-95"
+            >
+              <Zap className="w-4 h-4 fill-white" />
+              <span>⚡ MARK ATTENDANCE ON THE SPOT</span>
+            </Button>
+            <button
+              onClick={() => refreshLocation()}
+              className="text-[11px] font-mono text-[#93c5fd] hover:text-white flex items-center justify-center gap-1.5 py-1"
+            >
+              <RefreshCw className="w-3 h-3" /> Refresh GPS Pin
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Stats Grid */}

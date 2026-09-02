@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { authService } from '@/services/auth.service'
+import { locationService, LocationData } from '@/services/location.service'
 
 export interface AuthUser {
   id: string
@@ -15,6 +16,7 @@ export interface AuthUser {
   section?: string
   faculty_id?: string
   face_enrolled?: boolean
+  last_location?: any
   [key: string]: any
 }
 
@@ -23,6 +25,9 @@ interface AuthContextType {
   role: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  currentLocation: LocationData | null
+  isLocationActive: boolean
+  refreshLocation: () => Promise<LocationData | null>
   login: (credentials: { username_or_email: string; password: string }) => Promise<any>
   studentLogin: (credentials: { student_id_or_email: string; password: string }) => Promise<any>
   logout: () => void
@@ -34,6 +39,32 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [currentLocation, setCurrentLocation] = useState<LocationData | null>(locationService.getCachedLocation())
+  const [isLocationActive, setIsLocationActive] = useState<boolean>(false)
+
+  // Listen to locationService updates
+  useEffect(() => {
+    const unsub = locationService.subscribe((loc) => {
+      if (loc) {
+        setCurrentLocation(loc)
+        setIsLocationActive(true)
+      }
+    })
+    return unsub
+  }, [])
+
+  const refreshLocation = useCallback(async () => {
+    try {
+      const loc = await locationService.getCurrentLocation(true)
+      await locationService.syncWithBackend(loc)
+      setCurrentLocation(loc)
+      setIsLocationActive(true)
+      return loc
+    } catch (e) {
+      console.warn('Failed to refresh location:', e)
+      return null
+    }
+  }, [])
 
   const loadUser = useCallback(async () => {
     const token = localStorage.getItem('access_token')
@@ -48,6 +79,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const profile = await authService.getMe()
       setUser(profile)
+      // Automatically sync location telemetry on app load
+      locationService.syncWithBackend().catch(() => {})
     } catch {
       localStorage.removeItem('access_token')
       localStorage.removeItem('refresh_token')
@@ -79,6 +112,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: data.role,
       })
     }
+    // Automatically capture and record location immediately upon login
+    locationService.syncWithBackend().catch(err => console.warn('Login location sync warning:', err))
     return data
   }
 
@@ -100,6 +135,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         student_id: credentials.student_id_or_email,
       })
     }
+    // Automatically capture and record location immediately upon login
+    locationService.syncWithBackend().catch(err => console.warn('Student login location sync warning:', err))
     return data
   }
 
@@ -118,6 +155,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: user?.role || localStorage.getItem('role'),
         isAuthenticated: !!user || !!localStorage.getItem('access_token'),
         isLoading,
+        currentLocation,
+        isLocationActive,
+        refreshLocation,
         login,
         studentLogin,
         logout,

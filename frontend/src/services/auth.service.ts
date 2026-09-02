@@ -15,4 +15,17 @@ export const authService = {
 
   getMe: () =>
     api.get('/auth/me').then(r => r.data),
+
+  recordLocation: (data: {
+    latitude: number
+    longitude: number
+    accuracy?: number
+    source?: string
+    city?: string
+    region?: string
+    country?: string
+  }) => api.post('/auth/record-location', data).then(r => r.data),
+
+  getLatestLocation: () =>
+    api.get('/auth/latest-location').then(r => r.data),
 }

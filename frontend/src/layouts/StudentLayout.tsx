@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import ContentLoader from '@/components/ContentLoader'
+import { LocationStatusBadge } from '@/components/LocationStatusBadge'
 
 export default function StudentLayout() {
   const { user, logout } = useAuth()
@@ -174,6 +175,7 @@ export default function StudentLayout() {
           </div>
 
           <div className="flex items-center gap-3">
+            <LocationStatusBadge />
             <button
               onClick={handleLogout}
               className="px-3 py-1.5 text-xs font-semibold text-[#ba1a1a] bg-[#ffdad6]/60 border border-[#ffdad6] hover:bg-[#ffdad6] active:scale-95 rounded-lg transition-all duration-150 flex items-center gap-1.5"

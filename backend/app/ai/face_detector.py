@@ -20,15 +20,25 @@ class FaceDetector:
 
     def _init_detector(self):
         try:
+            import onnxruntime as ort
             import insightface
             from insightface.app import FaceAnalysis
+
+            available_providers = ort.get_available_providers()
+            if "CUDAExecutionProvider" in available_providers:
+                providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+                ctx_id = 0
+            else:
+                providers = ["CPUExecutionProvider"]
+                ctx_id = -1
+
             self._app = FaceAnalysis(
                 name="buffalo_l",
-                providers=["CUDAExecutionProvider", "CPUExecutionProvider"]
+                providers=providers
             )
-            self._app.prepare(ctx_id=0, det_size=(640, 640))
+            self._app.prepare(ctx_id=ctx_id, det_size=(640, 640))
             self._available = True
-            logger.info("InsightFace detector initialized (buffalo_l)")
+            logger.info(f"InsightFace detector initialized (buffalo_l) with providers={providers}, ctx_id={ctx_id}")
         except Exception as e:
             logger.warning(f"InsightFace init failed: {e}. Running in demo mode.")
             self._available = False

@@ -161,6 +161,23 @@ async def enroll_face(
         upsert=True
     )
 
+    # Sync to students collection
+    await db.students.update_one(
+        {"student_id": student["student_id"]},
+        {"$set": {
+            "is_face_enrolled": True,
+            "face_enrolled": True,
+            "enrollment_count": len(enrolled_vector_ids),
+            "updated_at": datetime.utcnow()
+        }}
+    )
+
+    # Sync to users collection
+    await db.users.update_one(
+        {"username": student["student_id"]},
+        {"$set": {"face_enrolled": True}}
+    )
+
     return {
         "message": f"Successfully enrolled {len(enrolled_vector_ids)} face(s)",
         "enrolled_count": len(enrolled_vector_ids),
@@ -186,4 +203,19 @@ async def delete_enrollment(
         pinecone_service.delete_vectors(vector_ids)
 
     await db.face_enrollments.delete_one({"student_id": student_id})
+
+    # Clear flags on students and users collections
+    await db.students.update_one(
+        {"student_id": student_id},
+        {"$set": {
+            "is_face_enrolled": False,
+            "face_enrolled": False,
+            "enrollment_count": 0,
+            "updated_at": datetime.utcnow()
+        }}
+    )
+    await db.users.update_one(
+        {"username": student_id},
+        {"$set": {"face_enrolled": False}}
+    )
     return {"message": f"Deleted {len(vector_ids)} embeddings"}

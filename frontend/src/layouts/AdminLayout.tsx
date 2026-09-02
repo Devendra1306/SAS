@@ -11,6 +11,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import ContentLoader from '@/components/ContentLoader'
+import { LocationStatusBadge } from '@/components/LocationStatusBadge'
 
 export default function AdminLayout() {
   const { user, logout } = useAuth()
@@ -189,6 +190,7 @@ export default function AdminLayout() {
           </div>
 
           <div className="flex items-center gap-3">
+            <LocationStatusBadge />
             <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-white border border-[#e2e8f0] rounded-full text-xs font-semibold text-[#065f46] shadow-2xs">
               <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse"></span>
               <span>Pinecone 512-D Online</span>
