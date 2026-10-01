@@ -85,7 +85,7 @@ async def delete_student(
     success = await student_service.delete_student(student_id)
     if not success:
         raise HTTPException(status_code=404, detail="Student not found")
-    return {"message": "Student deactivated"}
+    return {"message": "Student record, login account, and face vectors permanently deleted"}
 
 
 @router.post("/{student_id}/face-enrollment")

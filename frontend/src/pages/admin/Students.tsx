@@ -52,7 +52,7 @@ export default function Students() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => studentsService.deleteStudent(id),
     onSuccess: () => {
-      toast.success('Student record deactivated')
+      toast.success('Student and Pinecone face vectors permanently deleted')
       queryClient.invalidateQueries({ queryKey: ['students'] })
     },
     onError: (err: any) => {
@@ -73,8 +73,9 @@ export default function Students() {
   })
 
   const handleDelete = (student: any) => {
-    if (window.confirm(`Are you sure you want to deactivate student ${student.name} (${student.student_id})?`)) {
-      deleteMutation.mutate(student.student_id || student.id)
+    const sid = student.student_id || student.id
+    if (window.confirm(`Are you sure you want to permanently delete student "${student.name}" (${student.student_id})?\n\nThis will immediately remove their record from the database, deactivate login access, and erase all biometric face vectors from Pinecone.`)) {
+      deleteMutation.mutate(sid)
     }
   }
 
@@ -286,9 +287,10 @@ export default function Students() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            title="Deactivate Student"
+                            title="Delete Student & Face Vectors"
                             className="h-8 w-8 text-slate-400 hover:text-red-600 hover:bg-red-50"
                             onClick={() => handleDelete(student)}
+                            disabled={deleteMutation.isPending}
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>

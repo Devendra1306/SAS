@@ -64,6 +64,7 @@ async def get_students(
 ) -> dict:
     db = get_database()
     query: Dict[str, Any] = {}
+    query["is_active"] = {"$ne": False}
     if department:
         query["department"] = department
     if year:
@@ -100,10 +101,72 @@ async def update_student(student_id: str, data: dict) -> Optional[dict]:
 
 
 async def delete_student(student_id: str) -> bool:
+    """
+    Permanently deletes student from database, removes login user credentials,
+    cleans up face enrollment metadata, and deletes all 512-dim face vector embeddings from Pinecone.
+    """
     db = get_database()
-    query = {"_id": ObjectId(student_id)} if ObjectId.is_valid(student_id) else {"student_id": student_id}
-    result = await db.students.update_one(query, {"$set": {"is_active": False}})
-    return result.modified_count > 0
+    
+    # 1. Locate student record
+    if ObjectId.is_valid(student_id):
+        student_query = {"$or": [{"_id": ObjectId(student_id)}, {"student_id": student_id}]}
+    else:
+        student_query = {"student_id": student_id}
+    
+    student = await db.students.find_one(student_query)
+    if not student:
+        return False
+
+    sid = student.get("student_id")
+    email = student.get("email")
+    user_id = student.get("user_id")
+
+    # 2. Collect Pinecone vector IDs to delete
+    vector_ids = set()
+    enrollment = await db.face_enrollments.find_one({"student_id": sid})
+    if enrollment and enrollment.get("pinecone_vector_ids"):
+        for vid in enrollment["pinecone_vector_ids"]:
+            vector_ids.add(vid)
+
+    # Standard naming pattern fallback: student_{sid}_{001..020}
+    for i in range(1, 21):
+        vector_ids.add(f"student_{sid}_{i:03d}")
+
+    # 3. Delete from Pinecone index
+    try:
+        from app.vector_db.pinecone_service import pinecone_service
+        from app.config import settings
+        if vector_ids:
+            pinecone_service.delete_vectors(list(vector_ids))
+        if pinecone_service.is_available and pinecone_service.index is not None:
+            try:
+                pinecone_service.index.delete(filter={"student_id": {"$eq": sid}}, namespace=settings.PINECONE_NAMESPACE)
+            except Exception:
+                pass
+    except Exception as e:
+        print(f"Warning deleting Pinecone vectors for {sid}: {e}")
+
+    # 4. Remove student record from MongoDB
+    await db.students.delete_many({"$or": [{"_id": student["_id"]}, {"student_id": sid}]})
+
+    # 5. Remove associated user login account
+    user_conditions = [{"username": sid}]
+    if email:
+        user_conditions.append({"email": email})
+    if user_id:
+        if ObjectId.is_valid(str(user_id)):
+            user_conditions.append({"_id": ObjectId(str(user_id))})
+        else:
+            user_conditions.append({"_id": str(user_id)})
+    await db.users.delete_many({"$or": user_conditions})
+
+    # 6. Remove face enrollment document
+    await db.face_enrollments.delete_many({"student_id": sid})
+
+    # 7. Clean up attendance records for this student
+    await db.attendance.delete_many({"student_id": sid})
+
+    return True
 
 
 async def _get_enrollment_count(db, student_id: str) -> int:
