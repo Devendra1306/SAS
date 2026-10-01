@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Lock, GraduationCap, ArrowRight, ShieldCheck, UserCheck, Sparkles, ChevronRight, Activity } from 'lucide-react'
+import { Lock, GraduationCap, ArrowRight, ShieldCheck, UserCheck, Sparkles, ChevronRight, Activity, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input'
 export default function StudentLogin() {
   const [studentId, setStudentId] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const { studentLogin } = useAuth()
   const navigate = useNavigate()
@@ -28,10 +29,10 @@ export default function StudentLogin() {
     }
   }
 
-  const fillDemoStudent = () => {
-    setStudentId('23A81A4301')
+  const fillStudent = (id: string, name: string) => {
+    setStudentId(id)
     setPassword('Student@123')
-    toast.success('Demo Student credentials populated')
+    toast.success(`Student credentials populated: ${id} (${name})`)
   }
 
   return (
@@ -134,7 +135,7 @@ export default function StudentLogin() {
                   <label className="block text-xs font-bold text-[#0b1c30]" htmlFor="password">
                     Password
                   </label>
-                  <span className="text-xs text-[#059669] hover:underline cursor-pointer font-medium">Need help?</span>
+                  <span className="text-[11px] font-mono text-[#059669]">Case-Sensitive</span>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -144,12 +145,20 @@ export default function StudentLogin() {
                     id="password"
                     name="password"
                     required
-                    placeholder="••••••••"
-                    type="password"
+                    placeholder="Enter password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 bg-white border border-[#e2e8f0] rounded-xl focus:ring-2 focus:ring-[#059669] focus:border-[#059669] text-sm text-[#0b1c30]"
+                    className="w-full pl-9 pr-10 py-2 bg-white border border-[#e2e8f0] rounded-xl focus:ring-2 focus:ring-[#059669] focus:border-[#059669] text-sm text-[#0b1c30]"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                    aria-label="Toggle password visibility"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -166,18 +175,53 @@ export default function StudentLogin() {
               </motion.div>
             </form>
 
-            {/* 1-Click Demo Credential */}
-            <div className="pt-4 border-t border-[#e2e8f0]">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={fillDemoStudent}
-                className="w-full border-[#e2e8f0] bg-[#f8f9ff] text-[#0b1c30] hover:bg-[#ecfdf5] hover:text-[#059669] text-xs h-9 font-semibold rounded-xl"
-              >
-                <span className="w-2 h-2 rounded-full bg-[#059669] mr-2 shrink-0" />
-                Auto-Fill Demo Student (23A81A4301)
-              </Button>
+            {/* 1-Click Preset Credentials */}
+            <div className="pt-4 border-t border-[#e2e8f0] space-y-2">
+              <p className="text-[10px] font-mono font-bold text-[#64748b] uppercase tracking-wider text-center">
+                1-Click Verified Student Logins (Password: Student@123)
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fillStudent('23A81A4397', 'Devendra')}
+                  className="border-[#e2e8f0] bg-[#f8f9ff] text-[#0b1c30] hover:bg-[#ecfdf5] hover:text-[#059669] text-[11px] h-8 font-semibold rounded-xl"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#059669] mr-1 shrink-0" />
+                  23A81A4397 (Devendra)
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fillStudent('23A81A4367', 'Prasad')}
+                  className="border-[#e2e8f0] bg-[#f8f9ff] text-[#0b1c30] hover:bg-[#ecfdf5] hover:text-[#059669] text-[11px] h-8 font-semibold rounded-xl"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#059669] mr-1 shrink-0" />
+                  23A81A4367 (Prasad)
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fillStudent('24A85A4307', 'Kiran')}
+                  className="border-[#e2e8f0] bg-[#f8f9ff] text-[#0b1c30] hover:bg-[#ecfdf5] hover:text-[#059669] text-[11px] h-8 font-semibold rounded-xl"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#059669] mr-1 shrink-0" />
+                  24A85A4307 (Kiran)
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fillStudent('23A81A4301', 'Demo')}
+                  className="border-[#e2e8f0] bg-[#f8f9ff] text-[#0b1c30] hover:bg-[#ecfdf5] hover:text-[#059669] text-[11px] h-8 font-semibold rounded-xl"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1 shrink-0" />
+                  23A81A4301 (Demo)
+                </Button>
+              </div>
             </div>
 
             {/* Divider */}
