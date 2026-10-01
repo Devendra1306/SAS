@@ -211,6 +211,31 @@ async def get_session(session_id: str) -> Optional[dict]:
     return _serialize_session(doc) if doc else None
 
 
+async def get_sessions(
+    status: Optional[str] = None,
+    faculty_id: Optional[str] = None,
+    department: Optional[str] = None,
+    year: Optional[int] = None,
+    section: Optional[str] = None,
+    limit: int = 50
+) -> List[dict]:
+    db = get_database()
+    query = {}
+    if status:
+        query["status"] = status
+    if faculty_id:
+        query["faculty_id"] = str(faculty_id)
+    if department:
+        query["department"] = department
+    if year:
+        query["year"] = int(year)
+    if section:
+        query["section"] = section
+
+    docs = await db.attendance_sessions.find(query).sort("created_at", -1).to_list(limit)
+    return [_serialize_session(d) for d in docs]
+
+
 async def mark_attendance(data: dict) -> dict:
     """Mark attendance. Enforces duplicate prevention via unique index."""
     db = get_database()

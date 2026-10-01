@@ -43,10 +43,9 @@ async def create_student(data: dict) -> dict:
 
 async def get_student_by_id(student_id: str) -> Optional[dict]:
     db = get_database()
-    # Try by MongoDB _id first, then by student_id field
-    query = {}
+    # Try by MongoDB _id and by student_id field
     if ObjectId.is_valid(student_id):
-        query = {"_id": ObjectId(student_id)}
+        query = {"$or": [{"_id": ObjectId(student_id)}, {"student_id": student_id}]}
     else:
         query = {"student_id": student_id}
     doc = await db.students.find_one(query)

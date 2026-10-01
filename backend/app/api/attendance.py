@@ -105,6 +105,31 @@ async def calibrate_location(
 
 # ── Sessions ─────────────────────────────────────────────────────────────────
 
+@router.get("/sessions")
+async def list_sessions(
+    status: Optional[str] = None,
+    faculty_id: Optional[str] = None,
+    department: Optional[str] = None,
+    year: Optional[int] = None,
+    section: Optional[str] = None,
+    limit: int = Query(50, ge=1, le=100),
+    current_user: dict = Depends(get_current_user)
+):
+    """List attendance sessions filtered by status, faculty, department, etc."""
+    fac_id = faculty_id
+    if current_user["role"] == "FACULTY" and not fac_id:
+        fac_id = current_user["_id"]
+    sessions = await attendance_service.get_sessions(
+        status=status,
+        faculty_id=fac_id,
+        department=department,
+        year=year,
+        section=section,
+        limit=limit
+    )
+    return {"sessions": sessions, "total": len(sessions)}
+
+
 @router.post("/session", status_code=201)
 async def create_session(
     data: SessionCreate,
