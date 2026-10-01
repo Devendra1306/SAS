@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, Edit3, BookOpen, Mail, RefreshCw, Users, ShieldCheck } from 'lucide-react'
+import { Plus, Trash2, Edit3, BookOpen, Mail, RefreshCw, Users, ShieldCheck, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { facultyService } from '@/services/faculty.service'
 import { Card, CardContent } from '@/components/ui/Card'
@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 export default function Faculty() {
   const queryClient = useQueryClient()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [formData, setFormData] = useState({
     faculty_id: '',
     name: '',
@@ -253,13 +254,23 @@ export default function Faculty() {
 
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-[#0b1c30]">Initial Password *</Label>
-              <Input
-                className="bg-white border-[#e2e8f0] text-[#0b1c30] text-sm"
-                type="password"
-                required
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              />
+              <div className="relative">
+                <Input
+                  className="bg-white border-[#e2e8f0] text-[#0b1c30] text-sm pr-10"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-[#0058be] transition-colors focus:outline-none z-10 cursor-pointer"
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4 text-[#0058be]" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
 
             <DialogFooter className="border-t border-[#e2e8f0] pt-4">

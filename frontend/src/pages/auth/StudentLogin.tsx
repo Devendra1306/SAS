@@ -153,11 +153,16 @@ export default function StudentLogin() {
                   />
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
-                    aria-label="Toggle password visibility"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-[#059669] transition-colors focus:outline-none z-20 cursor-pointer"
+                    title={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4 text-[#059669]" />
+                    ) : (
+                      <Eye className="w-4 h-4 hover:text-slate-600" />
+                    )}
                   </button>
                 </div>
               </div>

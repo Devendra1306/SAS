@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Webcam from 'react-webcam'
 import {
   UserPlus, Camera, Upload, CheckCircle2, AlertCircle,
-  Sparkles, ArrowRight, ArrowLeft, Trash2, RefreshCw, ShieldCheck
+  Sparkles, ArrowRight, ArrowLeft, Trash2, RefreshCw, ShieldCheck, Eye, EyeOff
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { studentsService } from '@/services/students.service'
@@ -23,6 +23,7 @@ export default function RegisterStudent() {
   const [createdStudent, setCreatedStudent] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [enrolling, setEnrolling] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   // Step 1: Student Details Form
   const [formData, setFormData] = useState({
@@ -274,13 +275,23 @@ export default function RegisterStudent() {
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-[#0b1c30]">Student Portal Password *</Label>
-                <Input
-                  className="bg-white border-[#e2e8f0] text-[#0b1c30] text-sm"
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                />
+                <div className="relative">
+                  <Input
+                    className="bg-white border-[#e2e8f0] text-[#0b1c30] text-sm pr-10"
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-[#0058be] transition-colors focus:outline-none z-10 cursor-pointer"
+                    aria-label="Toggle password visibility"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4 text-[#0058be]" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="pt-3 flex justify-end">
