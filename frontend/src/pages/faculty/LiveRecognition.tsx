@@ -7,7 +7,7 @@ import {
   Camera, CheckCircle2, AlertCircle, ArrowRight, RefreshCw,
   UserCheck, ShieldCheck, UserX, Clock, Users, ArrowLeft,
   Sparkles, Check, ChevronRight, Search, StopCircle, CornerDownRight,
-  Eye, Zap, Lock, Unlock, Award
+  Eye, Zap, Lock, Unlock, Award, Upload, Shield
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { attendanceService } from '@/services/attendance.service'
@@ -23,6 +23,7 @@ export default function LiveRecognition() {
   const { sessionId } = useParams<{ sessionId: string }>()
   const navigate = useNavigate()
   const webcamRef = useRef<Webcam>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Camera & recognition state
   const [capturing, setCapturing] = useState(false)
@@ -89,6 +90,50 @@ export default function LiveRecognition() {
       setCapturing(false)
     }
   }, [capturing, sessionId, refetchRoster])
+
+  // Handle Uploading a Student Photo from File
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const base64 = reader.result as string
+      setCapturedSnapshot(base64)
+      setCapturing(true)
+      setLastResult(null)
+
+      try {
+        const res = await attendanceService.recognizeOne({
+          session_id: sessionId || '',
+          frame_base64: base64
+        })
+
+        setLastResult(res)
+        if (res.matched && res.status === 'PRESENT') {
+          toast.success(res.message || 'Student Recognized & Marked Present!')
+        } else if (res.matched && res.status === 'DUPLICATE') {
+          toast(res.message || 'Student already marked Present', { icon: 'ℹ️' })
+        } else {
+          toast.error(res.message || 'Student face not recognized in Pinecone')
+        }
+
+        refetchRoster()
+      } catch (err: any) {
+        toast.error(err.response?.data?.detail || 'Recognition failed. Please retry.')
+        setLastResult({
+          success: false,
+          matched: false,
+          status: 'ERROR',
+          message: 'Server recognition error. You can mark student manually.'
+        })
+      } finally {
+        setCapturing(false)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+      }
+    }
+    reader.readAsDataURL(file)
+  }
 
   // Handle Manual Attendance Mark for a Student
   const handleManualMark = async (studentIdToMark?: string) => {
@@ -234,13 +279,30 @@ export default function LiveRecognition() {
               {/* Webcam Viewport with Corner Reticle & Laser Sweep */}
               <div className="relative aspect-4/3 w-full bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-inner flex items-center justify-center">
                 {cameraError ? (
-                  <div className="p-6 text-center text-slate-300 space-y-3">
+                  <div className="p-6 text-center text-slate-300 space-y-3 z-30 max-w-md">
                     <Camera className="w-10 h-10 text-amber-400 mx-auto" />
-                    <p className="font-bold text-sm text-white">Camera Access Issue</p>
-                    <p className="text-xs text-slate-400 max-w-sm">{cameraError}</p>
-                    <p className="text-[11px] text-amber-300">
-                      You can still take attendance by selecting students directly from the roster on the right.
+                    <p className="font-bold text-sm text-white">Browser Camera Permission Required</p>
+                    <p className="text-xs text-slate-400">
+                      Chrome restricts live webcam on non-HTTPS origins. You can either open the secure link below or upload/snap a student photo directly.
                     </p>
+                    <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
+                      <a
+                        href={window.location.href.replace('http://', 'https://')}
+                        className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#0058be] hover:bg-[#004395] text-white text-xs font-bold rounded-xl shadow-md transition-colors"
+                      >
+                        <Shield className="w-3.5 h-3.5" />
+                        <span>Open HTTPS (Unlocks Webcam)</span>
+                      </a>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="border-slate-700 bg-slate-900 text-white hover:bg-slate-800 text-xs h-9 font-semibold rounded-xl"
+                      >
+                        <Upload className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
+                        <span>Upload Student Photo</span>
+                      </Button>
+                    </div>
                   </div>
                 ) : capturedSnapshot ? (
                   <img src={capturedSnapshot} alt="Captured Student Snapshot" className="w-full h-full object-cover" />
@@ -299,8 +361,17 @@ export default function LiveRecognition() {
                 </div>
               </div>
 
+              {/* Hidden File Input for Direct Photo Upload / Mobile Camera */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileSelect}
+              />
+
               {/* Action Buttons Toolbar */}
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-2.5">
                 <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }} className="flex-1">
                   <Button
                     type="button"
@@ -310,7 +381,20 @@ export default function LiveRecognition() {
                     className="w-full bg-[#0058be] hover:bg-[#004395] text-white text-xs font-bold h-12 rounded-xl shadow-md flex items-center justify-center gap-2"
                   >
                     <Camera className="w-4 h-4" />
-                    <span>📸 CAPTURE & RECOGNIZE STUDENT</span>
+                    <span>📸 CAPTURE & RECOGNIZE (WEBCAM)</span>
+                  </Button>
+                </motion.div>
+
+                <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={capturing}
+                    className="w-full sm:w-auto border-[#e2e8f0] bg-[#f8f9ff] text-[#0b1c30] hover:bg-[#eff4ff] hover:text-[#0058be] text-xs font-bold h-12 px-4 rounded-xl flex items-center justify-center gap-1.5"
+                  >
+                    <Upload className="w-4 h-4 text-[#0058be]" />
+                    <span>Upload Photo</span>
                   </Button>
                 </motion.div>
 
@@ -320,7 +404,7 @@ export default function LiveRecognition() {
                       type="button"
                       variant="outline"
                       onClick={handleNextStudent}
-                      className="border-[#e2e8f0] bg-white text-[#0b1c30] hover:bg-[#eff4ff] text-xs font-semibold h-12 px-5 rounded-xl"
+                      className="border-[#e2e8f0] bg-white text-[#0b1c30] hover:bg-[#eff4ff] text-xs font-semibold h-12 px-4 rounded-xl"
                     >
                       <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Retake
                     </Button>
