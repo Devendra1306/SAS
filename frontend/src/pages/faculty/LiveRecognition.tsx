@@ -281,18 +281,19 @@ export default function LiveRecognition() {
                 {cameraError ? (
                   <div className="p-6 text-center text-slate-300 space-y-3 z-30 max-w-md">
                     <Camera className="w-10 h-10 text-amber-400 mx-auto" />
-                    <p className="font-bold text-sm text-white">Browser Camera Permission Required</p>
+                    <p className="font-bold text-sm text-white">Camera Access Needed</p>
                     <p className="text-xs text-slate-400">
-                      Chrome restricts live webcam on non-HTTPS origins. You can either open the secure link below or upload/snap a student photo directly.
+                      Please allow camera permissions in your browser to scan students in real time.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-2 justify-center pt-2">
-                      <a
-                        href={window.location.href.replace('http://', 'https://')}
-                        className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#0058be] hover:bg-[#004395] text-white text-xs font-bold rounded-xl shadow-md transition-colors"
+                    <div className="flex justify-center gap-2 pt-2">
+                      <Button
+                        type="button"
+                        onClick={() => setCameraError(null)}
+                        className="bg-[#0058be] hover:bg-[#004395] text-white text-xs font-bold h-9 px-4 rounded-xl shadow-md"
                       >
-                        <Shield className="w-3.5 h-3.5" />
-                        <span>Open HTTPS (Unlocks Webcam)</span>
-                      </a>
+                        <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                        <span>Retry Camera</span>
+                      </Button>
                       <Button
                         type="button"
                         variant="outline"
@@ -300,7 +301,7 @@ export default function LiveRecognition() {
                         className="border-slate-700 bg-slate-900 text-white hover:bg-slate-800 text-xs h-9 font-semibold rounded-xl"
                       >
                         <Upload className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
-                        <span>Upload Student Photo</span>
+                        <span>Upload Photo</span>
                       </Button>
                     </div>
                   </div>
@@ -326,39 +327,41 @@ export default function LiveRecognition() {
                   />
                 )}
 
-                {/* Corner Reticle Frame */}
-                <div className="absolute inset-0 p-8 pointer-events-none flex items-center justify-center">
-                  <motion.div
-                    animate={{
-                      scale: capturing ? [1, 1.03, 1] : 1,
-                      borderColor: lastResult?.matched ? '#10b981' : '#2170e4'
-                    }}
-                    transition={{ repeat: capturing ? Infinity : 0, duration: 1 }}
-                    className="w-56 h-56 border-2 border-dashed border-[#2170e4]/60 rounded-2xl relative flex items-center justify-center"
-                  >
-                    {/* Reticle Corner Brackets */}
-                    <div className="absolute top-0 left-0 w-6 h-6 border-t-3 border-l-3 border-[#2170e4] rounded-tl-lg" />
-                    <div className="absolute top-0 right-0 w-6 h-6 border-t-3 border-r-3 border-[#2170e4] rounded-tr-lg" />
-                    <div className="absolute bottom-0 left-0 w-6 h-6 border-b-3 border-l-3 border-[#2170e4] rounded-bl-lg" />
-                    <div className="absolute bottom-0 right-0 w-6 h-6 border-b-3 border-r-3 border-[#2170e4] rounded-br-lg" />
+                {/* Corner Reticle Frame (Only show when camera is active) */}
+                {!cameraError && (
+                  <div className="absolute inset-0 p-8 pointer-events-none flex items-center justify-center">
+                    <motion.div
+                      animate={{
+                        scale: capturing ? [1, 1.03, 1] : 1,
+                        borderColor: lastResult?.matched ? '#10b981' : '#2170e4'
+                      }}
+                      transition={{ repeat: capturing ? Infinity : 0, duration: 1 }}
+                      className="w-56 h-56 border-2 border-dashed border-[#2170e4]/60 rounded-2xl relative flex items-center justify-center"
+                    >
+                      {/* Reticle Corner Brackets */}
+                      <div className="absolute top-0 left-0 w-6 h-6 border-t-3 border-l-3 border-[#2170e4] rounded-tl-lg" />
+                      <div className="absolute top-0 right-0 w-6 h-6 border-t-3 border-r-3 border-[#2170e4] rounded-tr-lg" />
+                      <div className="absolute bottom-0 left-0 w-6 h-6 border-b-3 border-l-3 border-[#2170e4] rounded-bl-lg" />
+                      <div className="absolute bottom-0 right-0 w-6 h-6 border-b-3 border-r-3 border-[#2170e4] rounded-br-lg" />
 
-                    {capturing ? (
-                      <div className="bg-[#0b1c30]/90 px-3 py-1.5 rounded-full border border-white/20 text-white text-xs font-mono font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm">
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#2170e4]" />
-                        <span>Searching Pinecone...</span>
-                      </div>
-                    ) : lastResult?.matched ? (
-                      <div className="bg-[#10b981] px-3 py-1.5 rounded-full text-white text-xs font-mono font-bold flex items-center gap-1.5 shadow-lg">
-                        <Check className="w-4 h-4" />
-                        <span>Vector Verified</span>
-                      </div>
-                    ) : (
-                      <span className="text-[11px] font-mono text-white/70 bg-[#0b1c30]/60 px-2.5 py-1 rounded-md backdrop-blur-xs">
-                        Align Face Here
-                      </span>
-                    )}
-                  </motion.div>
-                </div>
+                      {capturing ? (
+                        <div className="bg-[#0b1c30]/90 px-3 py-1.5 rounded-full border border-white/20 text-white text-xs font-mono font-bold flex items-center gap-2 shadow-lg backdrop-blur-sm">
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#2170e4]" />
+                          <span>Searching Pinecone...</span>
+                        </div>
+                      ) : lastResult?.matched ? (
+                        <div className="bg-[#10b981] px-3 py-1.5 rounded-full text-white text-xs font-mono font-bold flex items-center gap-1.5 shadow-lg">
+                          <Check className="w-4 h-4" />
+                          <span>Vector Verified</span>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] font-mono text-white/70 bg-[#0b1c30]/60 px-2.5 py-1 rounded-md backdrop-blur-xs">
+                          Align Face Here
+                        </span>
+                      )}
+                    </motion.div>
+                  </div>
+                )}
               </div>
 
               {/* Hidden File Input for Direct Photo Upload / Mobile Camera */}
