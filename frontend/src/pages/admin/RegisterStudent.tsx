@@ -47,15 +47,22 @@ export default function RegisterStudent() {
     e.preventDefault()
     setLoading(true)
     try {
-      const res = await studentsService.createStudent({
+      const cleanData = {
         ...formData,
+        student_id: formData.student_id.trim().toUpperCase(),
+        roll_number: formData.roll_number.trim().toUpperCase(),
+        name: formData.name.trim(),
+        email: formData.email.trim().toLowerCase(),
+        phone: formData.phone.trim(),
         year: Number(formData.year),
-      })
+      }
+      const res = await studentsService.createStudent(cleanData)
       setCreatedStudent(res)
-      toast.success(`Student profile created for ${formData.name}!`)
+      toast.success(`Student profile created for ${cleanData.name}!`)
       setStep(2)
     } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Failed to create student'
+      const detail = err.response?.data?.detail
+      const msg = typeof detail === 'string' ? detail : (Array.isArray(detail) ? detail.map((d: any) => d.msg || JSON.stringify(d)).join('; ') : 'Failed to create student')
       toast.error(msg)
     } finally {
       setLoading(false)
@@ -119,7 +126,7 @@ export default function RegisterStudent() {
 
     setEnrolling(true)
     try {
-      const studentId = createdStudent?.student_id || formData.student_id
+      const studentId = (createdStudent?.student_id || formData.student_id).trim()
 
       // Convert base64 to Blob files
       const blobFiles = await Promise.all(
@@ -136,11 +143,19 @@ export default function RegisterStudent() {
         form.append('files', f)
       })
 
-      await studentsService.enrollFace(studentId, form)
-      toast.success('Face embeddings generated and stored in Pinecone!')
+      const res = await studentsService.enrollFace(studentId, form)
+      toast.success(res?.message || 'Face embeddings generated and stored in Pinecone!')
       navigate('/admin/students')
     } catch (err: any) {
-      const msg = err.response?.data?.detail || 'Face enrollment failed'
+      const detail = err.response?.data?.detail
+      let msg = 'Face enrollment failed'
+      if (typeof detail === 'string') {
+        msg = detail
+      } else if (Array.isArray(detail)) {
+        msg = detail.map((d: any) => d.msg || JSON.stringify(d)).join('; ')
+      } else if (err.message) {
+        msg = err.message
+      }
       toast.error(msg)
     } finally {
       setEnrolling(false)

@@ -11,5 +11,5 @@ export const studentsService = {
   delete: (id: string) => api.delete(`/students/${id}`).then(r => r.data),
   deleteStudent: (id: string) => api.delete(`/students/${id}`).then(r => r.data),
   enrollFace: (id: string, formData: FormData) =>
-    api.post(`/students/${id}/face-enrollment`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }).then(r => r.data),
+    api.post(`/students/${id}/face-enrollment`, formData).then(r => r.data),
 }
